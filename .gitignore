@@ -1,2 +1,3 @@
 pipeline/raw/
 __pycache__/
+pipeline/history.db
