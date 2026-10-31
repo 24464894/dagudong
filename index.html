@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>大股東在幹嘛</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* 社群動態牆：左側選單＋中間 600px 貼文串＋右側話題；貼文附圖卡，黃色只用在圖卡和重點 */
+:root{
+  --bg:#FFFFFF;--panel:#F6F6F3;--ink:#101010;--muted:#6B6E73;--line:#E6E6E1;--hover:#F2F2EE;
+  --hl:#FFE14D;--on-hl:#101010;--hi:#C2410C;--hi-bg:#FFF1E8;--hi-fg:#9A3412;--mid:#3730A3;--mid-bg:#EEF0FF;
+  --card-dark:#101010;--on-dark:#FFFFFF;
+  --sans:'Noto Sans TC',system-ui,-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101010;--panel:#181818;--ink:#F3F3F1;--muted:#9A9DA3;--line:#2A2A2A;--hover:#1C1C1C;
+  --hi:#F08A4B;--hi-bg:#3A2216;--hi-fg:#FDBA8C;--mid:#A5B4FC;--mid-bg:#23264A;--card-dark:#232323;--on-dark:#F3F3F1;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101010;--panel:#181818;--ink:#F3F3F1;--muted:#9A9DA3;--line:#2A2A2A;--hover:#1C1C1C;
+  --hi:#F08A4B;--hi-bg:#3A2216;--hi-fg:#FDBA8C;--mid:#A5B4FC;--mid-bg:#23264A;--card-dark:#232323;--on-dark:#F3F3F1;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.shell{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:240px minmax(0,600px) minmax(0,320px);gap:24px;justify-content:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.left{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;padding-block:20px;display:flex;flex-direction:column;gap:6px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);padding:6px 10px 18px}
+.brand b{font-size:19px;font-weight:900}
+.av{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;background:#101010;overflow:hidden}
+.av svg{width:36px;height:36px}
+.av.co{background:var(--panel);color:var(--ink);font-weight:900;font-size:15px;border:1px solid var(--line)}
+.nav a{display:flex;align-items:center;gap:14px;padding:11px 12px;border-radius:999px;color:var(--ink);text-decoration:none;font-size:17px}
+.nav a svg{width:24px;height:24px;flex:none}
+.nav a:hover{background:var(--hover)}
+.nav a[aria-current="page"]{font-weight:900}
+.nav a[aria-current="page"] svg{stroke-width:2.6}
+.btn{min-height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--ink);color:var(--bg);font:inherit;font-weight:700;cursor:pointer}
+.btn.hl{background:var(--hl);color:var(--on-hl)}
+.btn.line{background:transparent;color:var(--ink);border:1px solid var(--line)}
+:focus-visible{outline:3px solid var(--mid);outline-offset:2px}
+.center{border-left:1px solid var(--line);border-right:1px solid var(--line);min-height:100vh;min-width:0}
+.feedhead{position:sticky;top:env(safe-area-inset-top,0px);z-index:4;background:var(--bg);border-bottom:1px solid var(--line)}
+.feedhead h1{font-size:19px;font-weight:900;margin:0;padding:14px 16px 4px}
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none}
+.tabs a{flex:1;text-align:center;padding:12px 14px;color:var(--muted);text-decoration:none;font-weight:700;white-space:nowrap;border-bottom:3px solid transparent}
+.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--ink)}
+.tabs a:hover{background:var(--hover)}
+.post{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.post:hover{background:color-mix(in srgb,var(--hover) 50%,transparent)}
+.who{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font-size:15px}
+.who b{font-weight:900}
+.who .muted{font-size:14px}
+.pin{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:2px}
+.txt{white-space:pre-line;margin-top:2px}
+.txt a.ht{color:var(--mid);text-decoration:none;font-weight:500}
+.txt a.ht:hover{text-decoration:underline}
+.att{margin-top:12px;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.att.y{background:var(--hl);color:var(--on-hl);border-color:var(--hl);padding:22px 22px 18px}
+.att.d{background:var(--card-dark);color:var(--on-dark);border-color:var(--card-dark);padding:20px}
+.att.p{padding:14px 16px}
+.att .num{font-family:var(--mono);font-weight:600;font-size:clamp(36px,8vw,54px);line-height:1}
+.att .cap{font-size:14px;font-weight:700;margin-top:6px}
+.att .src{font-size:12px;opacity:.7;margin-top:10px}
+.acts{display:flex;gap:4px;margin:8px 0 0 -10px}
+.acts button,.acts a{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;border:0;border-radius:999px;background:transparent;color:var(--muted);font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+.acts button:hover,.acts a:hover{background:var(--hover);color:var(--ink)}
+.acts svg{width:19px;height:19px}
+.acts [aria-pressed="true"]{color:var(--hi)}
+.lst{display:flex;flex-direction:column}
+.lst div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.lst div:last-child{border-bottom:0}
+.att.y .lst div{border-color:rgba(0,0,0,.12)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 9px;border-radius:999px;background:var(--panel);color:var(--ink);white-space:nowrap}
+.tag.hi{background:var(--hi-bg);color:var(--hi-fg)}
+.tag.mid{background:var(--mid-bg);color:var(--mid)}
+.tag.y{background:var(--hl);color:var(--on-hl)}
+.bar{height:8px;background:rgba(127,127,127,.18);border-radius:4px;margin-top:4px}
+.bar i{display:block;height:100%;border-radius:4px;background:currentColor}
+.right{padding-block:16px;display:flex;flex-direction:column;gap:16px;position:sticky;top:env(safe-area-inset-top,0px);align-self:start}
+.box{background:var(--panel);border-radius:16px;padding:14px 16px}
+.box h2{font-size:18px;font-weight:900;margin:0 0 6px}
+.trend{display:block;padding:9px 0;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+.trend:last-child{border-bottom:0}
+.trend small{display:block;color:var(--muted);font-size:13px}
+.trend b{font-weight:700}
+.search{display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:999px;padding:0 16px;height:46px;border:1px solid transparent}
+.search:focus-within{border-color:var(--ink);background:var(--bg)}
+.search input{flex:1;min-width:0;border:0;background:transparent;font:inherit;color:var(--ink);outline:none}
+.search svg{width:18px;height:18px;color:var(--muted);flex:none}
+.sugg a{display:flex;align-items:center;gap:12px;padding:10px 16px;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+.sugg a:hover{background:var(--hover)}
+.prof{border-bottom:1px solid var(--line)}
+.prof .cover{height:110px;background:var(--hl);position:relative}
+.prof .cover span{position:absolute;right:16px;bottom:10px;font-family:var(--mono);font-weight:600;font-size:13px;color:var(--on-hl)}
+.prof .body{padding:0 16px 16px}
+.prof .avbig{width:86px;height:86px;border-radius:50%;margin-top:-43px;border:4px solid var(--bg);background:var(--panel);display:grid;place-items:center;font-weight:900;font-size:26px}
+.prof h1{margin:8px 0 0;font-size:24px;font-weight:900}
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:14px}
+.stats b{font-family:var(--mono)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.chip{min-height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.empty{padding:40px 16px;text-align:center;color:var(--muted)}
+.note{font-size:13px;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--mid);color:#FFFFFF;padding:12px 18px;border-radius:999px;font-weight:700;z-index:20}
+/* 儀表板 */
+body.wide .shell{grid-template-columns:240px minmax(0,1fr);max-width:1400px}
+body.wide .right{display:none}
+body.wide .center{border-right:0}
+.dhead{padding:18px 24px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.dhead h1{font-size:24px;font-weight:900;margin:0}
+.dhead p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.sec{padding:18px 24px;border-bottom:1px solid var(--line)}
+.sec h2{font-size:17px;font-weight:900;margin:0}
+.sec .sub{color:var(--muted);font-size:13px;margin:2px 0 12px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.tl-axis,.tl-row{display:grid;grid-template-columns:230px minmax(0,1fr) 92px;gap:16px;align-items:center}
+.tl-axis{font-size:11px;color:var(--muted);padding-bottom:4px}
+.months{position:relative;height:16px}
+.months span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.tl-row{padding:10px 0;border-top:1px solid var(--line)}
+.tl-row.new{background:linear-gradient(90deg,color-mix(in srgb,var(--hl) 35%,transparent),transparent 40%)}
+.tl-name{display:flex;align-items:center;gap:10px;min-width:0;text-decoration:none;color:var(--ink)}
+.tl-name b{font-weight:900}
+.tl-name .note{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{position:relative;height:34px}
+.track .tick{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.track.tall .tick{top:4px;bottom:4px}
+.track.tall{height:30px;border-bottom:1px dashed var(--line)}
+.track .today{position:absolute;right:0;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.mk{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border:0;padding:0;cursor:pointer;display:block}
+.mk.insider{background:var(--hl);outline:2px solid var(--ink);border-radius:2px;transform:translate(-50%,-50%) rotate(45deg)}
+.mk.control{background:var(--hi);clip-path:polygon(50% 0,100% 100%,0 100%);width:16px;height:16px}
+.mk.pledgeUp{background:var(--mid);border-radius:50%}
+.mk.fined{background:var(--ink);border-radius:2px;width:11px;height:11px}
+.mk.trade{background:transparent;border:2px solid var(--hi);border-radius:50%}
+.rng{position:absolute;top:50%;height:10px;transform:translateY(-50%);background:var(--hi);opacity:.8;border-radius:3px;min-width:6px;cursor:pointer;border:0;padding:0}
+.rng.ins{background:var(--hl);opacity:1;outline:1.5px solid var(--ink)}
+.early{position:absolute;left:2px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--hi-fg);font-weight:700;background:var(--bg);padding:0 4px;border-radius:4px}
+.pl{text-align:right;font-family:var(--mono);font-size:13px}
+.pl .bar{margin-left:auto;width:80px}
+.rmbtn{border:0;background:transparent;color:var(--muted);cursor:pointer;font:inherit;font-size:12px;padding:2px 4px}
+.rmbtn:hover{color:var(--ink);text-decoration:underline}
+.addrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.addrow .search{height:40px;max-width:320px;flex:1}
+.pop{position:relative}
+.pop .sugg{position:absolute;left:0;right:0;top:44px;z-index:8;background:var(--bg);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.12);max-width:420px}
+.pop .sugg button{display:flex;width:100%;justify-content:space-between;gap:8px;padding:9px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.pop .sugg button:hover{background:var(--hover)}
+.diff{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 24px}
+.diff h3{font-size:14px;font-weight:900;margin:0 0 6px;display:flex;justify-content:space-between}
+.diff ul{list-style:none;margin:0 0 14px;padding:0}
+.diff li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.diff li a{color:var(--ink);font-weight:700;text-decoration:none}
+.diff li a:hover{text-decoration:underline}
+.radar{display:flex;flex-direction:column;gap:2px}
+.rind{display:grid;grid-template-columns:120px minmax(0,1fr) 46px;gap:12px;align-items:center;padding:4px 0}
+.rind .nm{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cells{display:flex;flex-wrap:wrap;gap:2px}
+.cells a{width:11px;height:11px;border-radius:2px;background:var(--line);display:block}
+.cells a.s1{background:color-mix(in srgb,var(--hi) 45%,var(--line))}
+.cells a.s2{background:var(--hi)}
+.cells a.s3{background:var(--ink)}
+.cells a.ins{background:var(--hl);outline:1.5px solid var(--ink)}
+.cells a:hover,.cells a:focus-visible{outline:2px solid var(--mid);outline-offset:1px}
+.rind .cnt{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+.lane{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;align-items:center;font-size:13px}
+.evlist{list-style:none;margin:0;padding:0}
+.evlist li{display:grid;grid-template-columns:96px 110px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;align-items:baseline}
+.kv{display:flex;flex-wrap:wrap;gap:28px}
+.kv div{display:flex;flex-direction:column}
+.kv b{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1.2}
+.kv span{font-size:13px;color:var(--muted)}
+.ex{font-size:12px;font-weight:700;background:var(--panel);color:var(--muted);padding:2px 8px;border-radius:999px}
+@media (max-width:1100px){body.wide .shell{grid-template-columns:84px minmax(0,1fr)}}
+@media (max-width:700px){
+  body.wide .shell{grid-template-columns:minmax(0,1fr)}
+  .dhead,.sec{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .tl-axis{grid-template-columns:minmax(0,1fr)}
+  .tl-axis>:first-child,.tl-axis>:last-child{display:none}
+  .tl-row{grid-template-columns:minmax(0,1fr) 80px;row-gap:8px}
+  .tl-row .track{grid-column:1 / -1;grid-row:2}
+  .rind{grid-template-columns:80px minmax(0,1fr)}
+  .rind .cnt{display:none}
+  .lane{grid-template-columns:72px minmax(0,1fr)}
+  .evlist li{grid-template-columns:80px minmax(0,1fr)}
+  .evlist li>:nth-child(3){grid-column:1 / -1}
+}
+
+.mbar,.mtop{display:none}
+.mtop .brand b{display:inline!important}
+@media (max-width:1100px){.shell{grid-template-columns:84px minmax(0,600px)}.right{display:none}.brand b,.nav a span,.left .btn{display:none}.nav a{justify-content:center}}
+@media (max-width:700px){
+  .shell{grid-template-columns:minmax(0,1fr);padding-left:0;padding-right:0}
+  .left{display:none}
+  .center{border:0;padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .mtop{display:flex;align-items:center;justify-content:space-between;padding:10px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+  .feedhead h1{display:none}
+  .mbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);padding:0 env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+  .mbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;color:var(--muted);text-decoration:none;font-size:11px}
+  .mbar a[aria-current="page"]{color:var(--ink);font-weight:700}
+  .mbar svg{width:24px;height:24px}
+  .post{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+}
+</style>
+
+<style>body{margin:0}html{-webkit-text-size-adjust:100%}</style>
+</head>
+<body>
+<div id="boot" class="empty" style="padding:40px;text-align:center;color:#6B6E73">載入中…</div>
+<div class="shell">
+  <aside class="left">
+    <a class="brand" href="#dash"><span class="av" aria-hidden="true"><svg viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="12" cy="16" rx="6" ry="7" fill="#FFFFFF"/><ellipse cx="24" cy="16" rx="6" ry="7" fill="#FFFFFF"/><circle cx="14.5" cy="17" r="3" fill="#101010"/><circle cx="26.5" cy="17" r="3" fill="#101010"/><rect x="3" y="24" width="30" height="8" rx="2" fill="#FFE14D"/></svg></span><b>大股東在幹嘛</b></a>
+    <nav class="nav" id="nav"><a href="#dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg><span>儀表板</span></a><a href="#radar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6-6"/></svg><span>全市場雷達</span></a><a href="#feed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>討論區</span></a><a href="#search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>搜尋</span></a></nav>
+    <button type="button" class="btn hl" data-toast="原型：訂閱功能尚未開放" style="margin-top:14px">每天早上寄給我</button>
+  </aside>
+  <main class="center">
+    <div class="mtop"><a class="brand" href="#dash" style="padding:0"><span class="av" aria-hidden="true" style="width:34px;height:34px"><svg viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="12" cy="16" rx="6" ry="7" fill="#FFFFFF"/><ellipse cx="24" cy="16" rx="6" ry="7" fill="#FFFFFF"/><circle cx="14.5" cy="17" r="3" fill="#101010"/><circle cx="26.5" cy="17" r="3" fill="#101010"/><rect x="3" y="24" width="30" height="8" rx="2" fill="#FFE14D"/></svg></span><b style="font-size:17px">大股東在幹嘛</b></a><button type="button" class="btn hl" data-toast="原型：訂閱功能尚未開放" style="min-height:36px;padding:0 14px;font-size:14px">訂閱</button></div>
+    <div id="app"></div>
+  </main>
+  <aside class="right" id="right"></aside>
+</div>
+<nav class="mbar" id="mbar"><a href="#dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg><span>儀表板</span></a><a href="#radar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6-6"/></svg><span>全市場雷達</span></a><a href="#feed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>討論區</span></a><a href="#search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>搜尋</span></a></nav>
+
+<script>
+// 資料網址：每天由站長電腦 push 到 GitHub；讀不到就用同資料夾的 data.json
+const DATA_URL='https://raw.githubusercontent.com/24464894/dagudong/main/data.json';
+async function loadData(){
+  for(const u of [DATA_URL+'?t='+Date.now(),'data.json']){
+    try{const r=await fetch(u,{cache:'no-store'});if(r.ok)return await r.json()}catch(e){}
+  }
+  throw new Error('讀不到資料');
+}
+loadData().then(main).catch(()=>{document.getElementById('app').innerHTML='<p class="empty">資料載入失敗，請稍後再試。</p>'});
+function main(D){
+document.getElementById('boot')?.remove();
+const $=s=>document.querySelector(s);
+const app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>Number(n).toLocaleString('zh-TW');
+const zhang=n=>fmt(Math.round(Math.abs(n)/1000));
+const BY={};D.cos.forEach(c=>BY[c.c]=c);
+const SIG={control:['換老闆','hi'],pledgeHigh:['董監質押過半','hi'],pledgeUp:['本週多押','mid'],trade:['改全額交割','hi'],disposal:['被處置','hi'],fined:['被罰','mid'],insider:['大股東要賣','y']};
+const ORDER=['insider','control','pledgeHigh','pledgeUp','trade','disposal','fined'];
+const multi=D.cos.filter(c=>c.k.length>=2).sort((a,b)=>b.k.length-a.k.length||(b.p||0)-(a.p||0));
+const md=d=>d?`${+d.slice(5,7)}/${+d.slice(8)}`:'';
+const ago=d=>{if(!d)return'';const diff=Math.round((new Date(D.today)-new Date(d))/864e5);return diff<=0?'今天':diff===1?'昨天':diff<7?diff+' 天前':diff<60?Math.round(diff/7)+' 週前':md(d)+(d.slice(0,4)!==D.today.slice(0,4)?' · '+d.slice(0,4):'')};
+const ht=(c,n)=>`<a class="ht" href="#co-${esc(c)}">#${esc(n||BY[c]?.n||c)}</a>`;
+const short=(s,n)=>{s=String(s);return s.length>n?s.slice(0,n)+'…':s};
+const LOGO=document.querySelector('.brand .av').innerHTML;
+let follow=new Set(),saved=new Set();
+try{follow=new Set(JSON.parse(localStorage.getItem('follow')||'[]'));saved=new Set(JSON.parse(localStorage.getItem('saved')||'[]'))}catch(e){}
+const store=()=>{try{localStorage.setItem('follow',JSON.stringify([...follow]));localStorage.setItem('saved',JSON.stringify([...saved]))}catch(e){}};
+function toast(t){document.querySelectorAll('.toast').forEach(x=>x.remove());const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),2200)}
+const I={
+  chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+  share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/></svg>',
+  save:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',
+  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>'
+};
+
+// ---------- 把資料變成貼文 ----------
+function posts(){
+  const P=[];
+  const total=D.ann['上市']+D.ann['上櫃'];
+  const routine=D.clause.filter(([k])=>k==='31'||k==='12').reduce((a,[,v])=>a+v,0);
+  D.insider.forEach(e=>P.push({id:'ins-'+e.c,cat:'insider',d:e.d,co:[e.c],rank:100,
+    text:`${ht(e.c,e.n)} 的大股東要賣股了。\n${esc(e.name)}（${esc(e.who)}）申報 ${esc(e.period.slice(5).replace('～2026-','～'))} 用一般交易賣 ${zhang(e.sell)} 張，等於手上的 ${Math.round(e.sell/e.hold*100)}%。${D.insider.length===1?'\n今天整個上市櫃就這一筆。':''}`,
+    att:`<div class="att y"><div class="num">${zhang(e.sell)} 張</div><div class="cap">${esc(e.name)} 申報轉讓・持股 ${zhang(e.hold)} 張的 ${(e.sell/e.hold*100).toFixed(1)}%</div><div class="src">內部人持股轉讓事前申報・申報不代表一定賣完</div></div>`}));
+  P.push({id:'noise',cat:'today',d:D.today,co:[],rank:60,
+    text:`今天上市櫃一共 ${total} 則重大訊息，我們全部讀過了。\n其中 ${routine} 則是董事會通過財報和法說會通知，每季都有，可以跳過。下面是剩下真正有事的。`,
+    att:`<div class="att p"><div class="lst">${D.clause.slice(0,6).map(([k,v])=>`<div><span>${esc({'20':'取得或處分資產','31':'董事會通過財報','51':'其他','12':'法說會','11':'子公司重要決議','53':'股價異常說明','6':'董事會決議','24':'私募','8':'主管人事異動','22':'背書保證'}[k]||'第'+k+'款')}</span><span class="mono">${v}</span></div>`).join('')}</div></div>`});
+  multi.forEach((c,i)=>{const ss=c.s.slice().sort((a,b)=>ORDER.indexOf(a.k)-ORDER.indexOf(b.k));
+    P.push({id:'multi-'+c.c,cat:'signals',d:ss.map(s=>s.d).sort().pop(),co:[c.c],rank:90-i,
+    text:`${ht(c.c,c.n)} 同時出現在 ${c.k.length} 份資料裡：\n${ss.slice(0,4).map(s=>'・'+esc(s.x)+'（'+md(s.d)+'）').join('\n')}\n單看一份不稀奇，疊在一起值得多看一眼。`,
+    att:`<div class="att d"><div style="display:flex;gap:6px;flex-wrap:wrap">${c.k.map(k=>`<span class="tag ${SIG[k][1]}">${SIG[k][0]}</span>`).join('')}</div><div class="num" style="margin-top:14px">${c.k.length} 個訊號</div><div class="cap">${esc(c.n)} ${c.c}・${esc(c.m)}</div></div>`})});
+  D.control.forEach((e,i)=>P.push({id:'ctl-'+e.c,cat:'control',d:e.d,co:[e.c],rank:70-i,
+    text:`${ht(e.c,e.n)} 換老闆了。\n${esc(short(e.x.replace(/核有.*$/,'').replace(/，?而有經營權異動情事。?$/,''),110))}`,
+    att:`<div class="att p" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><span class="tag ${['公開收購','股權轉讓','私募入主'].includes(e.t)?'hi':'mid'}">${esc(e.t)}</span><div style="margin-top:6px;font-weight:700">${esc(e.n)} ${e.c}</div><div class="note">${esc(e.m)}・經營權異動日 ${esc(e.d)}</div></div><div class="num mono" style="font-size:28px">${md(e.d)}</div></div>`}));
+  const hiP=D.cos.filter(c=>c.p>=90).sort((a,b)=>b.p-a.p);
+  P.push({id:'p90',cat:'pledge',d:D.pledgeDate,co:hiP.map(c=>c.c),rank:80,
+    text:`董監把自己的股票押出去九成以上的公司，目前有 ${hiP.length} 家：${hiP.map(c=>ht(c.c,c.n)).join('、')}。\n押越多，股價大跌時越可能被追繳。`,
+    att:`<div class="att p">${hiP.map(c=>`<div style="padding:6px 0"><div style="display:flex;justify-content:space-between"><b>${esc(c.n)}</b><span class="mono">${c.p.toFixed(2)}%</span></div><div class="bar" style="color:var(--hi)"><i style="width:${c.p}%"></i></div></div>`).join('')}</div>`});
+  const up=D.weekly.filter(w=>w.dv>=1e6).slice(0,6);
+  P.push({id:'wk',cat:'pledge',d:D.weekDate,co:up.map(w=>w.c),rank:75,
+    text:`這週誰又拿股票去借錢？集保的設質統計出來了，多押最多的是 ${ht(up[0].c,up[0].n)}，一週多押 ${zhang(up[0].dv)} 張。`,
+    att:`<div class="att p"><div class="lst">${up.map(w=>`<div><span>${esc(w.n)} <span class="mono muted">${w.c}</span></span><span class="mono" style="color:var(--hi-fg)">+${zhang(w.dv)} 張${w.r!=null?' ('+(w.r>0?'+':'')+w.r.toFixed(1)+'%)':''}</span></div>`).join('')}</div></div>`});
+  const hp=D.cos.filter(c=>c.p>=80&&c.p<90).sort((a,b)=>b.p-a.p);
+  P.push({id:'p80',cat:'pledge',d:D.pledgeDate,co:hp.map(c=>c.c),rank:50,
+    text:`押八成到九成的還有 ${hp.length} 家。有在追的可以點進去看看：\n${hp.map(c=>ht(c.c,c.n)+' '+c.p.toFixed(1)+'%').join('　')}`});
+  if(D.disp.length)P.push({id:'disp',cat:'risk',d:D.disp[0].d,co:D.disp.map(e=>e.c),rank:72,
+    text:`櫃買中心的處置名單，目前 ${D.disp.length} 檔。被處置的股票要先付錢才能買，而且每隔幾分鐘才撮合一次。\n${D.disp.map(e=>ht(e.c,e.n)).join(' ')}`,
+    att:`<div class="att p"><div class="lst">${D.disp.slice(0,5).map(e=>`<div><span>${esc(e.n)}</span><span class="mono muted">${md(e.from)}～${md(e.to)}</span></div>`).join('')}${D.disp.length>5?`<div><span class="muted">還有 ${D.disp.length-5} 檔</span><span></span></div>`:''}</div></div>`});
+  const g={};D.fines.forEach(f=>{if(f.c)(g[f.c]=g[f.c]||[]).push(f)});
+  Object.entries(g).filter(([,l])=>l.length>=3).sort((a,b)=>b[1].length-a[1].length).slice(0,2).forEach(([c,l])=>P.push({id:'fine-'+c,cat:'risk',d:l[0].d,co:[c],rank:65,
+    text:`${ht(c,l[0].n)} 已經被罰第 ${l.length} 次了。\n${esc(short(l[0].why,70))}`,
+    att:`<div class="att y"><div class="num">${l.slice().reverse().map(f=>f.amt?f.amt+'萬':'處分').join(' → ')}</div><div class="cap">${esc(l[0].src)}・最近一次 ${esc(l[0].d)}</div></div>`}));
+  return P;
+}
+const ALL=posts();
+
+function postHTML(p,pinned){
+  const s=saved.has(p.id);
+  return `<article class="post"><span class="av" aria-hidden="true">${LOGO}</span><div style="min-width:0">
+    ${pinned?'<div class="pin">置頂</div>':''}
+    <div class="who"><b>大股東在幹嘛</b><span class="muted">@dagudong · ${ago(p.d)}</span></div>
+    <div class="txt">${p.text}</div>${p.att||''}
+    <div class="acts">
+      ${p.co.length===1?`<a href="#co-${p.co[0]}" aria-label="看公司檔案">${I.eye}看公司</a>`:''}
+      <button type="button" data-toast="原型：留言功能尚未開放" aria-label="留言">${I.chat}留言</button>
+      <button type="button" data-share="${esc(p.id)}" aria-label="分享">${I.share}分享</button>
+      <button type="button" data-save="${esc(p.id)}" aria-pressed="${s}" aria-label="收藏">${I.save}${s?'已收藏':'收藏'}</button>
+    </div></div></article>`;
+}
+const TABS=[['feed','動態'],['signals','連環訊號'],['pledge','質押'],['control','換老闆'],['risk','處置與罰款']];
+function feed(cat){
+  const head=`<div class="feedhead"><h1>討論區</h1><nav class="tabs">${TABS.map(([k,l])=>`<a href="#${k}" ${k===cat?'aria-current="page"':''}>${l}</a>`).join('')}</nav></div>`;
+  const ctl5=new Set(ALL.filter(p=>p.cat==='control').sort((a,b)=>b.d.localeCompare(a.d)).slice(0,5).map(p=>p.id));
+  let list=cat==='feed'?ALL.filter(p=>p.cat!=='control'||ctl5.has(p.id)).sort((a,b)=>b.rank-a.rank):ALL.filter(p=>p.cat===cat||(cat==='signals'&&p.cat==='insider')).sort((a,b)=>b.rank-a.rank);
+  if(cat==='control')list=ALL.filter(p=>p.cat==='control').sort((a,b)=>b.d.localeCompare(a.d));
+  const intro={signals:`同一家公司在好幾份政府資料裡同時出現，才會被排進來。今天有 ${multi.length} 家。只是公開紀錄的整理，不代表公司有問題，也不是買賣建議。`,pledge:'董監事拿自己的股票去借錢叫質押。押越多，股價大跌時越可能被追繳、被迫賣股。',control:`證交所、櫃買中心認定經營權異動的公司，名單上有 ${D.control.length} 家。`,risk:'股價波動太大被限制交易，或公司違規被主管機關罰款。'}[cat];
+  return head+(intro?postHTML({id:'intro-'+cat,d:D.today,co:[],text:esc(intro)},true):'')+list.map(p=>postHTML(p)).join('');
+}
+
+// ---------- 搜尋 ----------
+const CONDS={p80:['質押超過 80%',c=>c.p>=80],control:['換過老闆',c=>c.k.includes('control')],disposal:['被處置',c=>c.k.includes('disposal')],trade:['全額交割',c=>c.k.includes('trade')],fined:['一年內被罰',c=>c.k.includes('fined')],multi:['兩個訊號以上',c=>c.k.length>=2]};
+let q='',cond=null;
+function coRow(c){return `<a href="#co-${c.c}"><span class="av co" aria-hidden="true">${esc(c.n.slice(0,1))}</span><span style="flex:1;min-width:0"><b>${esc(c.n)}</b> <span class="mono muted">${c.c}</span><br><span class="note">${esc(c.m)}${c.p!=null?'・董監質押 '+c.p.toFixed(1)+'%':''}</span></span><span style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${c.k.slice(0,3).map(k=>`<span class="tag ${SIG[k][1]}">${SIG[k][0]}</span>`).join('')}</span></a>`}
+function vSearch(){
+  return `<div class="feedhead" style="padding:12px 16px"><label class="search">${I.search}<input id="q" type="search" autocomplete="off" placeholder="搜尋公司名稱或代號" aria-label="搜尋公司" value="${esc(q)}"></label></div>
+  <div class="chips">${Object.entries(CONDS).map(([k,[l,f]])=>`<button type="button" class="chip" data-cond="${k}" aria-pressed="${cond===k}">${l} <span class="mono muted">${D.cos.filter(f).length}</span></button>`).join('')}</div>
+  <div class="sugg" id="res"></div>`;
+}
+function drawRes(){
+  const box=$('#res');if(!box)return;let r;
+  if(q.trim()){const s=q.trim();r=D.cos.filter(c=>c.c.startsWith(s)||c.n.includes(s))}
+  else if(cond)r=D.cos.filter(CONDS[cond][1]);
+  else r=multi;
+  r=r.slice().sort((a,b)=>b.k.length-a.k.length||(b.p||0)-(a.p||0)).slice(0,50);
+  box.innerHTML=(!q.trim()&&!cond?'<div class="note" style="padding:12px 16px 4px">最近有動靜的公司</div>':'')+(r.map(coRow).join('')||`<p class="empty">找不到「${esc(q)}」</p>`);
+}
+
+// ---------- 公司檔案頁 ----------
+function vCompany(code){
+  const c=BY[code];
+  if(!c)return `<p class="empty">找不到代號 ${esc(code)}。<a href="#search">回搜尋</a></p>`;
+  const on=follow.has(code);
+  const mine=ALL.filter(p=>p.co.includes(code)).sort((a,b)=>b.rank-a.rank);
+  const own=c.s.slice().sort((a,b)=>b.d.localeCompare(a.d)).map((s,i)=>({id:`s-${code}-${i}`,d:s.d,co:[code],text:`${ht(code,c.n)} ${esc(s.x)}`,att:`<div style="margin-top:8px"><span class="tag ${SIG[s.k][1]}">${SIG[s.k][0]}</span></div>`}));
+  const ctl=D.control.find(e=>e.c===code);
+  return `<div class="feedhead" style="display:flex;align-items:center;gap:12px;padding:8px 16px"><button type="button" data-back class="btn line" style="min-height:36px;width:36px;padding:0" aria-label="上一頁">←</button><div><b>${esc(c.n)}</b><div class="note">${c.s.length} 則紀錄</div></div></div>
+  <section class="prof"><div class="cover"><span>${c.c}・${esc(c.m)}</span></div><div class="body">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end"><div class="avbig" aria-hidden="true">${esc(c.n.slice(0,1))}</div><button type="button" id="fol" class="btn ${on?'line':''}" aria-pressed="${on}" style="margin-top:12px">${on?'追蹤中':'追蹤'}</button></div>
+    <h1>${esc(c.n)}</h1><div class="muted">@${c.c} · ${esc(c.m)}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${c.k.map(k=>`<span class="tag ${SIG[k][1]}">${SIG[k][0]}</span>`).join('')||'<span class="note">目前沒有訊號</span>'}</div>
+    <div class="stats"><span><b>${c.p!=null?c.p.toFixed(2)+'%':'—'}</b> <span class="muted">董監質押</span></span><span><b>${c.k.length}</b> <span class="muted">種訊號</span></span><span><b>${c.s.length}</b> <span class="muted">則紀錄</span></span></div>
+    ${ctl?`<p class="note" style="margin-top:10px">經營權異動原文：${esc(ctl.x)}</p>`:''}
+  </div></section>
+  ${mine.map(p=>postHTML(p)).join('')}${own.map(p=>postHTML(p)).join('')||'<p class="empty">這家公司在我們追蹤的資料裡沒有紀錄。</p>'}`;
+}
+
+// ---------- 儀表板 ----------
+const T1=new Date(D.today+'T00:00:00'), T0=new Date(T1);T0.setFullYear(T0.getFullYear()-1);
+const SPAN=T1-T0;
+const xp=d=>{const t=new Date(d+'T00:00:00');return Math.max(0,Math.min(100,(t-T0)/SPAN*100))};
+const inWin=d=>new Date(d+'T00:00:00')>=T0;
+const KIND={insider:['大股東申報賣股','insider'],control:['經營權易主','control'],pledgeUp:['本週多押','pledgeUp'],disposal:['處置期間','disposal'],fined:['被罰','fined'],trade:['全額交割','trade']};
+const IND=(c)=>(c.i==='金融業'?'金融保險業':c.i)||'其他';
+function events(code){
+  const c=BY[code];if(!c)return[];const E=[];
+  D.insider.filter(e=>e.c===code).forEach(e=>{const [a,b]=e.period.split('～');E.push({k:'insider',d:e.d,from:a,to:b,x:`${e.who}${e.name} 申報轉讓 ${zhang(e.sell)} 張（持股 ${(e.sell/e.hold*100).toFixed(1)}%），期間 ${e.period}`})});
+  D.control.filter(e=>e.c===code).forEach(e=>E.push({k:'control',d:e.d,x:`經營權異動（${e.t}）`,full:e.x}));
+  const w=D.weekly.find(x=>x.c===code);if(w&&w.dv>=1e6)E.push({k:'pledgeUp',d:D.weekDate,x:`這週設質增加 ${zhang(w.dv)} 張（${w.r>0?'+':''}${w.r}%）`});
+  D.disp.filter(e=>e.c===code).forEach(e=>E.push({k:'disposal',d:e.d,from:e.from,to:e.to,x:`處置 ${e.from}～${e.to}（${e.why}）`}));
+  D.fines.filter(f=>f.c===code).forEach(f=>E.push({k:'fined',d:f.d,x:`${f.src}罰 ${f.amt?f.amt+' 萬':'處分'}：${short(f.why,60)}`}));
+  D.trade.filter(t=>t.c===code).forEach(t=>E.push({k:'trade',d:D.today,x:`交易方式變更：${t.k}`}));
+  return E.sort((a,b)=>b.d.localeCompare(a.d));
+}
+const RECENT=(()=>{const t=new Date(T1);t.setDate(t.getDate()-8);return t.toISOString().slice(0,10)})();
+function marks(E){
+  let h='';const early=E.filter(e=>!inWin(e.d)&&!e.to);
+  if(early.length)h+=`<span class="early" title="${esc(early.map(e=>e.d+' '+e.x).join('\n'))}">◀ ${early[0].d.slice(0,4)} ${KIND[early[0].k][0]}</span>`;
+  E.forEach((e,i)=>{
+    if(e.to&&(inWin(e.to)||e.to>D.today)){const a=xp(e.from),b=Math.max(xp(e.to),a+1.2);const over=e.to>D.today;h+=`<button type="button" class="rng ${e.k==='insider'?'ins':''}" style="left:${a}%;width:${(over?100:b)-a}%" title="${esc(e.x)}" aria-label="${esc(e.x)}"></button>`;if(e.k==='insider')h+=`<button type="button" class="mk insider" style="left:${xp(e.d)}%" title="${esc(e.d+' '+e.x)}" aria-label="${esc(e.x)}"></button>`;return}
+    if(!inWin(e.d))return;
+    h+=`<button type="button" class="mk ${e.k}" style="left:${xp(e.d)}%" title="${esc(e.d+' '+e.x)}" aria-label="${esc(e.d+' '+e.x)}"></button>`;
+  });
+  return TICKS+h+'<span class="today" aria-hidden="true"></span>';
+}
+const MSTART=(()=>{const a=[];for(let m=1;m<=12;m++){const d=new Date(T0.getFullYear(),T0.getMonth()+m,1);const s=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;a.push([s,d])}return a})();
+function monthsAxis(){return MSTART.filter((_,i)=>i%2===0).map(([s,d])=>`<span style="left:${xp(s)}%">${d.getMonth()===0?d.getFullYear()+'/':''}${d.getMonth()+1}月</span>`).join('')}
+const TICKS=MSTART.map(([s])=>`<i class="tick" style="left:${xp(s)}%"></i>`).join('');
+const LEGEND=`<div class="legend"><span><i class="mk insider" style="position:static;transform:rotate(45deg)"></i>大股東申報賣股</span><span><i class="mk control" style="position:static;transform:none"></i>經營權易主</span><span><i class="mk pledgeUp" style="position:static;transform:none"></i>本週多押</span><span><i class="rng" style="position:static;transform:none;width:22px;display:inline-block"></i>處置期間</span><span><i class="mk fined" style="position:static;transform:none"></i>被罰</span><span><i class="mk trade" style="position:static;transform:none"></i>全額交割</span></div>`;
+const DEFAULT_WL=['2460','3041','3040','2528','2338','3259','1589','2330','2515','5205'];
+let wl=null;try{wl=JSON.parse(localStorage.getItem('wl')||'null')}catch(e){}
+const isExample=!wl;if(!wl)wl=DEFAULT_WL.filter(c=>BY[c]);
+const saveWl=()=>{try{localStorage.setItem('wl',JSON.stringify(wl))}catch(e){}};
+function rowHTML(code,removable){
+  const c=BY[code];const E=events(code);const fresh=E.some(e=>e.d>=RECENT);
+  return `<div class="tl-row ${fresh?'new':''}">
+    <a class="tl-name" href="#co-${code}"><span class="av co" aria-hidden="true" style="width:36px;height:36px;font-size:14px">${esc(c.n.slice(0,1))}</span><span style="min-width:0"><b>${esc(c.n)}</b> <span class="mono muted" style="font-size:13px">${code}</span><span class="note">${esc(IND(c))}・${E.length?E.length+' 筆紀錄':'一年內沒有動靜'}${fresh?'・<b style="color:var(--hi-fg)">最近有新紀錄</b>':''}</span></span></a>
+    <div class="track">${marks(E)}</div>
+    <div class="pl">${c.p!=null?c.p.toFixed(1)+'%':'—'}<div class="bar" style="color:${(c.p||0)>=50?'var(--hi)':'var(--muted)'}"><i style="width:${c.p||0}%"></i></div>${removable?`<button type="button" class="rmbtn" data-rm="${code}">移除</button>`:''}</div>
+  </div>`;
+}
+function recentList(){
+  const out={insider:[],disposal:[],pledgeUp:[],fined:[],trade:[]};
+  D.insider.forEach(e=>out.insider.push([e.c,e.n,`${zhang(e.sell)} 張`]));
+  D.disp.filter(e=>e.d>=RECENT).forEach(e=>out.disposal.push([e.c,e.n,`${md(e.from)}～${md(e.to)}`]));
+  D.weekly.filter(w=>w.dv>=1e6).forEach(w=>out.pledgeUp.push([w.c,w.n,`+${zhang(w.dv)} 張`]));
+  D.fines.filter(f=>f.d>=RECENT&&f.c).forEach(f=>out.fined.push([f.c,f.n,f.amt?f.amt+' 萬':'處分']));
+  const dn=D.weekly.filter(w=>w.dv<=-1e6);
+  return {out,dn};
+}
+function vDash(){
+  const {out,dn}=recentList();
+  const mine=wl.filter(c=>BY[c]);
+  const hot=mine.filter(c=>events(c).some(e=>e.d>=RECENT)).length;
+  const blk=(t,list,col)=>`<div><h3><span>${t}</span><span class="mono muted">${list.length}</span></h3><ul>${list.slice(0,6).map(([c,n,v])=>`<li><a href="#co-${c}">${esc(n)} <span class="mono muted" style="font-weight:400">${c}</span></a><span class="mono" style="color:${col||'var(--ink)'}">${esc(v)}</span></li>`).join('')||'<li class="muted">沒有</li>'}${list.length>6?`<li class="muted">還有 ${list.length-6} 筆</li>`:''}</ul></div>`;
+  return `<div class="dhead"><div><h1>我的儀表板</h1><p>資料日 ${D.today}・追蹤 ${mine.length} 家，其中 <b style="color:var(--ink)">${hot}</b> 家最近一週有新紀錄</p></div>${isExample?'<span class="ex">目前是範例清單，加入或移除公司後會換成你的</span>':''}</div>
+  <section class="sec"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline"><div><h2>追蹤清單：過去 12 個月</h2><p class="sub">每一列是一家公司，點標記可以看內容。右邊是董監持股質押比例。</p></div>${LEGEND}</div>
+    <div class="tl-axis"><span></span><div class="months">${monthsAxis()}</div><span style="text-align:right">董監質押</span></div>
+    ${mine.slice().sort((a,b)=>{const fa=events(a).some(e=>e.d>=RECENT),fb=events(b).some(e=>e.d>=RECENT);return fb-fa||events(b).length-events(a).length}).map(c=>rowHTML(c,true)).join('')}
+    <div class="addrow pop"><label class="search">${I.search}<input id="addq" type="search" autocomplete="off" placeholder="加入公司：名稱或代號" aria-label="加入公司到追蹤清單"></label><div class="sugg" id="adds" hidden></div></div>
+  </section>
+  <section class="sec"><h2>最近一週多了什麼</h2><p class="sub">全市場，${RECENT} 之後的新紀錄。每天跑抓資料程式後，這裡會變成「跟昨天比」。</p>
+    <div class="diff">${blk('大股東申報賣股',out.insider,'var(--ink)')}${blk('新的處置',out.disposal,'var(--hi-fg)')}${blk('這週多押千張以上',out.pledgeUp,'var(--hi-fg)')}${blk('這週贖回千張以上',dn.map(w=>[w.c,w.n,'−'+zhang(w.dv)+' 張']),'var(--mid)')}${blk('新的罰款',out.fined)}</div></section>
+  <section class="sec"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><h2>全市場有 ${multi.length} 家同時亮兩個燈以上</h2><a class="ht" href="#radar" style="font-weight:700;color:var(--mid);text-decoration:none">看全市場雷達 →</a></div>
+    <div class="tl-axis" style="margin-top:10px"><span></span><div class="months">${monthsAxis()}</div><span style="text-align:right">董監質押</span></div>
+    ${multi.filter(c=>!mine.includes(c.c)).slice(0,6).map(c=>rowHTML(c.c,false)).join('')}</section>`;
+}
+function vRadar(){
+  const g={};D.cos.forEach(c=>{(g[IND(c)]=g[IND(c)]||[]).push(c)});
+  const rows=Object.entries(g).map(([k,l])=>[k,l.sort((a,b)=>b.k.length-a.k.length||(b.p||0)-(a.p||0)),l.filter(c=>c.k.length).length]).sort((a,b)=>b[2]/b[1].length-a[2]/a[1].length);
+  const cls=c=>c.k.includes('insider')?'ins':c.k.length>=3?'s3':c.k.length===2?'s2':c.k.length===1?'s1':'';
+  return `<div class="dhead"><div><h1>全市場雷達</h1><p>上市櫃 ${D.cos.length} 家，一格一家，依產業排。產業依「有訊號的公司比例」由高到低。</p></div>
+  <div class="legend"><span><i style="width:11px;height:11px;border-radius:2px;background:var(--line);display:inline-block"></i>沒有訊號</span><span><i style="width:11px;height:11px;border-radius:2px;display:inline-block;background:color-mix(in srgb,var(--hi) 45%,var(--line))"></i>1 個</span><span><i style="width:11px;height:11px;border-radius:2px;display:inline-block;background:var(--hi)"></i>2 個</span><span><i style="width:11px;height:11px;border-radius:2px;display:inline-block;background:var(--ink)"></i>3 個以上</span><span><i style="width:11px;height:11px;border-radius:2px;display:inline-block;background:var(--hl);outline:1.5px solid var(--ink)"></i>大股東申報賣股</span></div></div>
+  <section class="sec"><div class="radar">${rows.map(([k,l,n])=>`<div class="rind"><span class="nm" title="${esc(k)}">${esc(k)}</span><div class="cells">${l.map(c=>`<a href="#co-${c.c}" class="${cls(c)}" title="${esc(c.n+' '+c.c+(c.k.length?'：'+c.k.map(x=>SIG[x][0]).join('、'):''))}" aria-label="${esc(c.n)}"></a>`).join('')}</div><span class="cnt">${n}/${l.length}</span></div>`).join('')}</div>
+  <p class="note" style="margin-top:12px">「1 個訊號」大多是董監質押過半。滑鼠移到方格上可以看公司名稱，點了進公司頁。</p></section>`;
+}
+function vCompanyDash(code){
+  const c=BY[code];
+  if(!c)return `<p class="empty">找不到代號 ${esc(code)}。<a href="#search">回搜尋</a></p>`;
+  const E=events(code);const inWl=wl.includes(code);
+  const w=D.weekly.find(x=>x.c===code);
+  const lanes=['insider','control','pledgeUp','disposal','fined','trade'];
+  const ctl=D.control.find(e=>e.c===code);
+  const feedCount=ALL.filter(p=>p.co.includes(code)).length;
+  return `<div class="dhead"><div style="display:flex;gap:14px;align-items:center"><button type="button" data-back class="btn line" style="min-height:36px;width:36px;padding:0" aria-label="上一頁">←</button><span class="av co" aria-hidden="true" style="width:52px;height:52px;font-size:20px">${esc(c.n.slice(0,1))}</span><div><h1>${esc(c.n)} <span class="mono muted" style="font-size:16px;font-weight:500">${code}</span></h1><p>${esc(c.m)}・${esc(IND(c))}</p></div></div>
+    <button type="button" class="btn ${inWl?'line':''}" data-wl="${code}">${inWl?'已在追蹤清單':'加入追蹤清單'}</button></div>
+  <section class="sec"><div class="kv"><div><b>${c.p!=null?c.p.toFixed(2)+'%':'—'}</b><span>董監持股質押（${D.pledgeDate.slice(0,7)}）</span></div><div><b>${w?(w.dv>0?'+':'−')+zhang(w.dv)+' 張':'0'}</b><span>這週設質增減（集保）</span></div><div><b>${E.length}</b><span>筆紀錄</span></div><div><b>${c.k.length}</b><span>種訊號</span></div></div></section>
+  <section class="sec"><h2>過去 12 個月</h2><p class="sub">每種紀錄一條線，最右邊是今天。</p>
+    <div class="lane" style="font-size:11px;color:var(--muted)"><span></span><div class="months">${monthsAxis()}</div></div>
+    ${lanes.map(k=>{const L=E.filter(e=>e.k===k);return `<div class="lane"><span class="${L.length?'':'muted'}">${KIND[k][0]}</span><div class="track tall">${marks(L)}</div></div>`}).join('')}
+  </section>
+  <section class="sec"><h2>全部紀錄</h2><ul class="evlist">${E.map(e=>`<li><span class="mono muted">${e.d}</span><span><span class="tag ${e.k==='insider'?'y':['control','disposal','trade'].includes(e.k)?'hi':'mid'}">${KIND[e.k][0]}</span></span><span>${esc(e.x)}</span></li>`).join('')||'<li><span class="muted" style="grid-column:1/-1">我們追蹤的資料裡，這家公司沒有紀錄。</span></li>'}</ul>
+  ${ctl?`<p class="note" style="margin-top:12px">經營權異動原文：${esc(ctl.x)}</p>`:''}</section>
+  ${feedCount?`<section class="sec"><h2>討論區裡的相關貼文</h2></section>${ALL.filter(p=>p.co.includes(code)).map(p=>postHTML(p)).join('')}`:''}`;
+}
+function drawAdd(q){const box=$('#adds');if(!box)return;q=q.trim();if(!q){box.hidden=true;return}
+  const r=D.cos.filter(c=>(c.c.startsWith(q)||c.n.includes(q))&&!wl.includes(c.c)).slice(0,8);
+  box.hidden=false;box.innerHTML=r.map(c=>`<button type="button" data-add="${c.c}"><span><b>${esc(c.n)}</b> <span class="mono muted">${c.c}</span></span><span class="muted">${c.k.length?c.k.length+' 個訊號':''}</span></button>`).join('')||'<p class="note" style="padding:10px 14px">找不到，或已在清單裡</p>'}
+
+// ---------- 右欄 ----------
+function right(){
+  const trends=[['signals','連環訊號',multi.length+' 家公司'],['pledge','董監質押超過八成',D.cos.filter(c=>c.p>=80).length+' 家'],['control','經營權易主',D.control.length+' 家'],['risk','被處置中',D.disp.length+' 檔']];
+  const fl=[...follow].filter(c=>BY[c]);
+  return `<a class="search" href="#search" style="text-decoration:none">${I.search}<span class="muted">搜尋公司</span></a>
+  <div class="box"><h2>今天在聊</h2>${trends.map(([h,t,n])=>`<a class="trend" href="#${h}"><small>台股・公開資料</small><b>${t}</b><small>${n}</small></a>`).join('')}</div>
+  <div class="box"><h2>你追蹤的公司</h2>${fl.length?fl.map(c=>`<a class="trend" href="#co-${c}"><b>${esc(BY[c].n)}</b><small>${BY[c].k.map(k=>SIG[k][0]).join('・')||'目前沒有訊號'}</small></a>`).join(''):'<p class="note">在公司頁按「追蹤」，有新紀錄就會出現在這裡。</p>'}</div>
+  <p class="note" style="padding:0 4px">資料來源：政府資料開放平臺（證交所、櫃買中心、集保、金管會），2026-10-30。只整理公開資訊，不提供買賣建議。原型，部分按鈕為示意。</p>`;
+}
+
+function render(){
+  const h=(location.hash||'#dash').slice(1);
+  const isCo=h.startsWith('co-');
+  const FEEDS=['feed','signals','pledge','control','risk'];
+  const key=isCo?'co':(['dash','radar','search',...FEEDS].includes(h)?h:'dash');
+  const wide=['dash','radar','co'].includes(key);
+  document.body.classList.toggle('wide',wide);
+  app.innerHTML=isCo?vCompanyDash(h.slice(3)):key==='dash'?vDash():key==='radar'?vRadar():key==='search'?vSearch():feed(key);
+  const navKey=key==='co'?'':FEEDS.includes(key)?'feed':key;
+  document.querySelectorAll('#nav a,#mbar a').forEach(a=>{if(a.getAttribute('href').slice(1)===navKey)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  if(!wide)$('#right').innerHTML=right();
+  if(key==='search'){drawRes();$('#q').addEventListener('input',e=>{q=e.target.value;drawRes()})}
+  const aq=$('#addq');if(aq)aq.addEventListener('input',e=>drawAdd(e.target.value));
+}
+function setWl(code,add){if(add&&!wl.includes(code))wl.push(code);if(!add)wl=wl.filter(c=>c!==code);saveWl();toast(add?'已加入追蹤清單':'已從追蹤清單移除');const y=scrollY;render();scrollTo(0,y)}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-toast]');if(t){toast(t.dataset.toast);return}
+  const sv=e.target.closest('[data-save]');if(sv){const id=sv.dataset.save;saved.has(id)?saved.delete(id):saved.add(id);store();const on=saved.has(id);sv.setAttribute('aria-pressed',on);sv.innerHTML=I.save+(on?'已收藏':'收藏');toast(on?'已收藏':'已取消收藏');return}
+  const sh=e.target.closest('[data-share]');if(sh){const p=ALL.find(x=>x.id===sh.dataset.share);const tmp=document.createElement('div');tmp.innerHTML=p?p.text:'';const txt=tmp.textContent+'\n— 大股東在幹嘛';
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('貼文文字已複製')).catch(()=>toast('無法複製，請手動選取文字'));return}
+  const ad=e.target.closest('[data-add]');if(ad){setWl(ad.dataset.add,true);return}
+  const rm=e.target.closest('[data-rm]');if(rm){setWl(rm.dataset.rm,false);return}
+  const wb=e.target.closest('[data-wl]');if(wb){setWl(wb.dataset.wl,!wl.includes(wb.dataset.wl));return}
+  const mkb=e.target.closest('.mk,.rng');if(mkb){toast(mkb.getAttribute('aria-label'));return}
+  const cb=e.target.closest('[data-cond]');if(cb){cond=cond===cb.dataset.cond?null:cb.dataset.cond;q='';const qi=$('#q');if(qi)qi.value='';document.querySelectorAll('[data-cond]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.cond===cond));drawRes();return}
+  if(e.target.closest('#fol')){const code=location.hash.slice(4);follow.has(code)?follow.delete(code):follow.add(code);store();toast(follow.has(code)?'已追蹤，有新紀錄會通知你':'已取消追蹤');const y=scrollY;render();scrollTo(0,y);return}
+  if(e.target.closest('[data-back]')){history.length>1?history.back():(location.hash='#today')}
+});
+window.addEventListener('hashchange',()=>{render();scrollTo(0,0)});
+render();
+}
+</script>
+
+</body>
+</html>
