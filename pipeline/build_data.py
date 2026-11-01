@@ -127,7 +127,9 @@ for lst in [list(cos.values()),control,weekly,trade,disp,fines,ins]:
 # dedupe signal kinds per company
 for c in cos.values():
     c['k']=sorted(set(s['k'] for s in c['s']))
-data={'today':'2026-10-30','pledgeDate':pledge_date,'weekDate':week_date,'cos':list(cos.values()),'control':control,'weekly':sorted(weekly,key=lambda w:-w['dv']),'trade':trade,'disp':disp,'fines':fines,'insider':ins,'ann':ann,'clause':clause.most_common(12)}
+import os
+TODAY=os.path.basename(os.path.normpath(D)) if re.match(r'\d{4}-\d{2}-\d{2}$',os.path.basename(os.path.normpath(D))) else __import__('datetime').date.today().isoformat()
+data={'today':TODAY,'pledgeDate':pledge_date,'weekDate':week_date,'cos':list(cos.values()),'control':control,'weekly':sorted(weekly,key=lambda w:-w['dv']),'trade':trade,'disp':disp,'fines':fines,'insider':ins,'ann':ann,'clause':clause.most_common(12)}
 json.dump(data,open(OUT,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 multi=[c for c in cos.values() if len(c['k'])>=2]
 multi.sort(key=lambda c:-len(c['k']))

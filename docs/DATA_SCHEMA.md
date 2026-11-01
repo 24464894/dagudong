@@ -83,3 +83,28 @@
 ```
 
 `items` 可能是空陣列（今天還沒產生），前端要顯示「還在整理中」。
+
+## diff.json（跟昨天比）
+
+`DIFF_URL = https://raw.githubusercontent.com/24464894/dagudong/main/diff.json`
+
+每天 `run_daily.bat` 會把 data.json 存一份到 `history/YYYY-MM-DD.json`，再用 `pipeline/make_diff.py` 跟「上一份快照」比，產生 diff.json：
+
+```json
+{
+  "today": "2026-11-03",
+  "prev": "2026-11-02",          // 上一份快照日期；null 表示還沒有可比的資料
+  "summary": {"fined": 2, "control": 1},   // 今天新出現的訊號，各種類幾筆
+  "items": [
+    {"c": "1718", "n": "中纖", "m": "上市",
+     "new":  [{"k": "fined", "d": "2026-11-02", "x": "證交所（重訊）罰 3 萬"}],  // 新出現的訊號（格式同 cos[].s）
+     "gone": [{"k": "disposal", "d": "...", "x": "..."}],                         // 消失的訊號（例如處置期滿）
+     "p": [83.64, 85.10],        // 董監質押比率 昨天→今天（有變才有）
+     "chain": true}              // 今天起同時亮兩個燈以上（有才有）
+  ]
+}
+```
+
+- items 依新訊號數量排序。只列有變化的公司；欄位沒有變化就不出現。
+- 前端「跟昨天比」：用 items 篩出追蹤清單裡的公司即可；`prev` 是 null 時顯示「明天起會開始比對」。
+- 歷史快照 `history/YYYY-MM-DD.json` 也可以直接讀（格式同 data.json），用來畫質押比率的走勢。

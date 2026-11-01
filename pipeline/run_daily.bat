@@ -16,6 +16,8 @@ python build_data.py raw\%TODAY% ..\data.json
 if errorlevel 1 goto fail
 if not exist ..\history mkdir ..\history
 copy /y ..\data.json ..\history\%TODAY%.json >nul
+python make_diff.py
+if errorlevel 1 echo （跟昨天比 diff.json 產生失敗，不影響發布，繼續）
 
 echo [3/4] 匯進本機資料庫 history.db...
 python to_sqlite.py
@@ -23,7 +25,7 @@ if errorlevel 1 echo （資料庫匯入失敗，不影響發布，繼續）
 
 echo [4/4] 推上 GitHub...
 cd /d "%~dp0.."
-git add data.json content.json history
+git add data.json diff.json content.json history
 git commit -m "data %TODAY%" >nul
 rem AI Studio 可能也推過程式碼，先接上最新版；衝突時以這台電腦的資料為準
 git pull --rebase -X theirs origin main
