@@ -25,6 +25,8 @@ echo [4/4] 推上 GitHub...
 cd /d "%~dp0.."
 git add data.json content.json history
 git commit -m "data %TODAY%" >nul
+rem AI Studio 可能也推過程式碼，先接上最新版；衝突時以這台電腦的資料為準
+git pull --rebase -X theirs origin main
 git push
 if errorlevel 1 goto fail
 echo 完成：%TODAY% 的資料已發布。
